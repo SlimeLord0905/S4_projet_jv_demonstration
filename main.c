@@ -2,6 +2,11 @@
 
 #define SIZE 60
 
+#define IDLE 1
+#define JUMP 2
+#define MIDAIR 3
+#define LANDING 4
+
 const int initialBackground[SIZE][SIZE] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -66,16 +71,75 @@ const int initialBackground[SIZE][SIZE] = {
 };
 const int proceduralBackground[SIZE] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
+int state = IDLE;
+int clk = 0;
 
+// player var 
 int posX = 240;
 int posY = 24;
 
+int acc_X = 0;
+int acc_y = 0; 
+
+// screen offset
 int offsetX = 240;
-int offsetY = 0;
+int offsetY = 40;
+
+// actor1
+int posX = 0;
+int posY = 0;
 
 
+void physics(){
+    /*gestion de tout ce qui est deplacement dynamique et des colision avec les plateforme
+    optionnel gt/n/ration du niveau ici si rapide si devient pllus complexe faire une fonction juste pour cela*/
+}
+void display(){
+    /*commande d<affichage sur le PPU c<est la qu<on va utiliser l API*/
+}
+
+void idle(){
+    /*attendre la pression de la touche jump du joueur effectuer les phisyque des enemies et le display
+    utiliser la frame d animation 1*/
+}
+void jump(){
+    /*lecture du temps de pression de la touche jump et application du ratio X et Y selon le joystick
+    effectuer les phisyque des enemies et le display
+    utiliser la frame d animation 2*/
+}
+void midair(){
+    /*effectuer les phisyque des enemies et du joeur et le display
+    detection des colision
+    utiliser la frame d animation 3*/
+}
+void landing(){
+    /*effectuer les phisyque des enemies et du joeur et le display
+    detection des colision
+    transition vers le state idle au bout de quelque miliseconde a ajuster au feeling compter le delais en nombre de cycle 
+    utiliser la frame d animation 2*/
+}
 int main() { 
-    printf("%d\n", initialBackground[0][0]); // Affiche 1
-    printf("%d\n", initialBackground[59][59]); // Affiche 1
+
+    
+    while(1){
+        /*clock pour limiter a 60 fps voir la fonction vitis pour avoir le temps en ms
+        facilite la physique et rend l<image plus fluide moin de jump */
+
+
+
+
+
+        if(clk){
+            if(state == IDLE){
+                idle();
+            }else if(state == JUMP){
+                jump();
+            }else if(state == MIDAIR){
+                midair();
+            }else if(state == LANDING){
+                landing();
+            }
+        }
+    }
     return 0;
 }
