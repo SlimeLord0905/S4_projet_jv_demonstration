@@ -86,8 +86,8 @@ int offsetX = 240;
 int offsetY = 40;
 
 // actor1
-int posX = 0;
-int posY = 0;
+//int posX = 0;
+//int posY = 0;
 
 
 void physics(){
@@ -96,17 +96,94 @@ void physics(){
 }
 void display(){
     /*commande d<affichage sur le PPU c<est la qu<on va utiliser l API*/
+
+    printf("Etat : %d | Position : (%d, %d)\n", state, posX, posY);
 }
+
+//---------------------------------- Code test a supprimer plus tard -------------------------------------------------------------
+// Simulation de lecture bouton pour test (à placer avant idle())
+int readButtonA() {
+    // Par exemple, retourne 1 après 10 cycles
+    static int frame = 0;
+    frame++;
+    return (frame == 10) ? 1 : 0;
+}
+
+int simulatedTime = 0;
+
+int getTime() {
+    return simulatedTime;
+}
+
+int readJoystickX() {
+    return 64;  // moitié droite
+}
+
+int readJoystickY() {
+    return 64;  // moitié haut
+}
+
+//---------------------------------- Code test a supprimer plus tard -------------------------------------------------------------
 
 void idle(){
     /*attendre la pression de la touche jump du joueur effectuer les phisyque des enemies et le display
     utiliser la frame d animation 1*/
+
+    // Check si saut est appuyer
+    int button = readButtonA(); // a voir en fonction de comment on get la manette
+
+    // changement d'état pour JUMP
+    if (button) {
+        state = JUMP;
+    }
+
+    // affichage idle (jcp comment on va le coder)
+    display();
 }
-void jump(){
-    /*lecture du temps de pression de la touche jump et application du ratio X et Y selon le joystick
-    effectuer les phisyque des enemies et le display
-    utiliser la frame d animation 2*/
+
+void jump() {
+    static int charging = 0;
+    static int jumpStartTime = -1;
+
+    int button = readButtonA();
+    int joyX = readJoystickX();
+    int joyY = readJoystickY();
+
+    int currentTime = getTime(); // a voir selon comment on fait le temps
+
+    if (!charging && button) {
+        // Démarrer la charge du saut (Comment on va aller haut)
+        charging = 1;
+        jumpStartTime = currentTime;
+        printf(">> Debut de la charge\n");
+    }
+
+    if (charging) {
+        int elapsed = currentTime - jumpStartTime;
+
+        // Si on dépasse 2 secondes ou si on relâche a voir selon le gameplay
+        if (!button || elapsed >= 2000) {
+            if (elapsed > 1000) elapsed = 1000; // cap la charge max à 1s
+
+            // puissance entre 0 et 10
+            int power = (elapsed * 10) / 1000;
+
+            acc_X = (joyX * power) / 128;
+            acc_y = (-joyY * power) / 128;
+
+            printf(">> Saut ! Puissance = %d | acc_X = %d | acc_y = %d\n", power, acc_X, acc_y);
+
+            state = MIDAIR;
+
+            charging = 0;
+            jumpStartTime = -1;
+        }
+    }
+
+    display();
 }
+
+
 void midair(){
     /*effectuer les phisyque des enemies et du joeur et le display
     detection des colision
@@ -118,6 +195,7 @@ void landing(){
     transition vers le state idle au bout de quelque miliseconde a ajuster au feeling compter le delais en nombre de cycle 
     utiliser la frame d animation 2*/
 }
+
 int main() { 
 
     
