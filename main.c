@@ -3,6 +3,10 @@
 #define SIZE_X 80
 #define SIZE_Y 45
 
+//limites horizontales du joueur, ajustés à la dernière tuile valable
+#define ARBRE_DROIT 24
+#define ARBRE_GAUCHE 608
+
 
 #define IDLE 1
 #define JUMP 2
@@ -99,13 +103,14 @@ int state = IDLE;
 int clk = 1;
 
 // player var 
-int posX = 240;
-int posY = 24;
+int posX = 360;
+int posY = 360;
 
 int acc_X = 0;
 int acc_y = 0; 
 
 // screen offset
+//revérifier les valeurs??
 int offsetX = 240;
 int offsetY = 40;
 
@@ -238,12 +243,12 @@ void midair(){
     posX += velX;
 
     // --- Gestion des rebonds sur les murs ---
-    if (posX < 0) {
-        posX = 0;
+    if (posX < ARBRE_GAUCHE) {
+        posX = ARBRE_GAUCHE;
         velX = -velX;
         printf(">> Rebond gauche\n");
-    } else if (posX >= SIZE_X) {
-        posX = SIZE_X - 1;
+    } else if (posX > ARBRE_DROIT) {
+        posX = ARBRE_DROIT;
         velX = -velX;
         printf(">> Rebond droite\n");
     }
