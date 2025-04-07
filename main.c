@@ -72,7 +72,7 @@ const int initialBackground[SIZE][SIZE] = {
 const int proceduralBackground[SIZE] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 int state = IDLE;
-int clk = 0;
+int clk = 1;
 
 // player var 
 int posX = 240;
@@ -101,13 +101,13 @@ void display(){
 }
 
 //---------------------------------- Code test a supprimer plus tard -------------------------------------------------------------
-// Simulation de lecture bouton pour test (à placer avant idle())
 int readButtonA() {
-    // Par exemple, retourne 1 après 10 cycles
     static int frame = 0;
     frame++;
-    return (frame == 10) ? 1 : 0;
+    // Pressé à partir de frame 10, relâché à frame 30 en gros comment on saute longtemps
+    return (frame >= 10 && frame < 60) ? 1 : 0;
 }
+
 
 int simulatedTime = 0;
 
@@ -116,11 +116,11 @@ int getTime() {
 }
 
 int readJoystickX() {
-    return 64;  // moitié droite
+    return 32;  // direction du joystick en x -128 a 128
 }
 
 int readJoystickY() {
-    return 64;  // moitié haut
+    return 128;  // direction du joystick en x -128 a 128
 }
 
 //---------------------------------- Code test a supprimer plus tard -------------------------------------------------------------
@@ -142,6 +142,10 @@ void idle(){
 }
 
 void jump() {
+    /*lecture du temps de pression de la touche jump et application du ratio X et Y selon le joystick
+    effectuer les phisyque des enemies et le display
+    utiliser la frame d animation 2*/
+
     static int charging = 0;
     static int jumpStartTime = -1;
 
@@ -165,7 +169,7 @@ void jump() {
         if (!button || elapsed >= 2000) {
             if (elapsed > 1000) elapsed = 1000; // cap la charge max à 1s
 
-            // puissance entre 0 et 10
+            // puissance entre 0 et 10 a changer si besoin
             int power = (elapsed * 10) / 1000;
 
             acc_X = (joyX * power) / 128;
@@ -188,24 +192,78 @@ void midair(){
     /*effectuer les phisyque des enemies et du joeur et le display
     detection des colision
     utiliser la frame d animation 3*/
+
+    static int velocityY = 0;
+    static int velX = 0; // on garde la vitesse horizontale
+
+    const int gravity = 1;
+    const int groundY = 24;
+
+    // Appliquer acc initiale
+    velocityY += acc_y;
+    velX += acc_X;
+
+    acc_y = 0;
+    acc_X = 0;
+
+    // Gravité
+    velocityY += gravity;
+
+    // Mouvement
+    posY += velocityY;
+    posX += velX;
+
+    // --- Gestion des rebonds sur les murs ---
+    if (posX < 0) {
+        posX = 0;
+        velX = -velX;
+        printf(">> Rebond gauche\n");
+    } else if (posX >= SIZE) {
+        posX = SIZE - 1;
+        velX = -velX;
+        printf(">> Rebond droite\n");
+    }
+
+    // Si sol touché
+    if (posY >= groundY) {
+        posY = groundY;
+        velocityY = 0;
+        velX = 0;  // on arrête aussi horizontalement à l'atterrissage
+        state = LANDING;
+        printf(">> Atterrissage détecté\n");
+    }
+
+    // Affichage
+    printf(">> MID-AIR: X=%d | Y=%d | velX=%d | velY=%d\n", posX, posY, velX, velocityY);
+    display();
 }
+
+
 void landing(){
     /*effectuer les phisyque des enemies et du joeur et le display
     detection des colision
     transition vers le state idle au bout de quelque miliseconde a ajuster au feeling compter le delais en nombre de cycle 
     utiliser la frame d animation 2*/
+
+    static int landingTimer = 0;
+    const int landingDuration = 30; // en nombre de cycles (ajuste selon la vitesse)
+
+    printf(">> LANDING... (timer: %d)\n", landingTimer);
+
+    landingTimer++;
+
+    if (landingTimer >= landingDuration) {
+        state = IDLE;
+        landingTimer = 0;
+    }
+
+    display();
 }
 
-int main() { 
-
-    
+int main() {
     while(1){
-        /*clock pour limiter a 60 fps voir la fonction vitis pour avoir le temps en ms
-        facilite la physique et rend l<image plus fluide moin de jump */
-
-
-
-
+        // Petit delay pour ralentir l’exécution
+        for (volatile int i = 0; i < 10000000; ++i);
 
         if(clk){
             if(state == IDLE){
@@ -218,6 +276,9 @@ int main() {
                 landing();
             }
         }
+
+        // Incrémenter le temps simulé
+        simulatedTime += 16;  // ~16ms = 60 fps
     }
     return 0;
 }
