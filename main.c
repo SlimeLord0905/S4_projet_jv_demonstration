@@ -242,8 +242,8 @@ void midair(){
         posX = 0;
         velX = -velX;
         printf(">> Rebond gauche\n");
-    } else if (posX >= SIZE) {
-        posX = SIZE - 1;
+    } else if (posX >= SIZE_X) {
+        posX = SIZE_X - 1;
         velX = -velX;
         printf(">> Rebond droite\n");
     }
