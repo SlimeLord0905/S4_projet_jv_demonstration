@@ -262,7 +262,7 @@ void landing(){
 
 int main() {
     while(1){
-        // Petit delay pour ralentir l’exécution
+        // Petit delay pour ralentir l’exécution juste en test
         for (volatile int i = 0; i < 10000000; ++i);
 
         if(clk){
