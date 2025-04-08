@@ -14,6 +14,7 @@
 #define JUMP 2
 #define MIDAIR 3
 #define LANDING 4
+#define DEATH 5
 
 //plateformes
 #define MAX_PLATFORMS 7
@@ -417,6 +418,15 @@ void midair(){
         printf(">> Atterrissage détecté\n");
     }
     
+
+    // a ajuster une fois qu<on a un visuel 
+    if(posY < (offsetY + 120)){
+        offsetY = posY -120;
+    }else if(posY > (offsetY + 240)){
+        state = DEATH;
+        printf("death");
+    }
+    
     // Affichage
     printf(">> MID-AIR: X=%d | Y=%d | velX=%d | velY=%d\n", posX, posY, velX, velocityY);
     display();
@@ -456,26 +466,25 @@ int main() {
         lastX = platforms[i].x;
         startY = alignToTile(startY - PLATFORM_SPACING_Y);
     }
-    // int count = 0;
-    // while(count < 1000){
-    //     count++;
-    //     // Petit delay pour ralentir l’exécution juste en test
-    //     for (volatile int i = 0; i < 10000000; ++i);
+    int clock = 0;
+    while(state != DEATH && clock < 1000){
+        // Petit delay pour ralentir l’exécution juste en test
+        for (volatile int i = 0; i < 10000000; ++i);
+        clock++;
+        if(clk){
+            if(state == IDLE){
+                idle();
+            }else if(state == JUMP){
+                jump();
+            }else if(state == MIDAIR){
+                midair();
+            }else if(state == LANDING){
+                landing();
+            }
+        }
 
-    //     if(clk){
-    //         if(state == IDLE){
-    //             idle();
-    //         }else if(state == JUMP){
-    //             jump();
-    //         }else if(state == MIDAIR){
-    //             midair();
-    //         }else if(state == LANDING){
-    //             landing();
-    //         }
-    //     }
-
-    //     // Incrémenter le temps simulé
-    //     simulatedTime += 16;  // ~16ms = 60 fps
-    // }
+        // Incrémenter le temps simulé
+        simulatedTime += 16;  // ~16ms = 60 fps
+    }
     return 0;
 }
