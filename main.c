@@ -16,7 +16,7 @@
 #define LANDING 4
 
 //plateformes
-#define MAX_PLATFORMS 10
+#define MAX_PLATFORMS 7
 #define PLATFORM_HEIGHT 2
 #define PLATFORM_MIN_WIDTH 4
 #define PLATFORM_MAX_WIDTH 9
@@ -24,6 +24,13 @@
 
 #define TILE_SIZE 8
 
+typedef enum {
+    NO_COLLISION,
+    COLLISION_LEFT,
+    COLLISION_RIGHT,
+    COLLISION_BOTTOM,
+    COLLISION_LANDING
+} CollisionType;
 
 const int initialBackground[SIZE_Y][SIZE_X] = {
     {4, 4, 4, 6, 6, 6, 6, 4, 4, 8, 6, 6, 14, 12, 13, 6, 6, 6, 6, 6, 6, 6, 6, 11, 10, 6, 6, 6, 6, 6, 8, 6, 6, 6, 6, 6, 8, 6, 6, 11, 10, 6, 6, 6, 6, 14, 12, 13, 6, 6, 6, 6, 6, 8, 6, 6, 6, 6, 14, 12, 13, 6, 6, 6, 6, 11, 10, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 4, 4},
@@ -126,14 +133,57 @@ int acc_y = 0;
 int offsetX = 240;
 int offsetY = 40;
 
-// actor1
-//int posX = 0;
-//int posY = 0;
+//structure de données pour les plateformes
+typedef struct{
+    int x;
+    int y;
+    int width;
+    int active;
+} Platform;
 
 
-void physics(){
+Platform platforms[MAX_PLATFORMS];
+int platformCount = 0; //nombre de plateformes affichees
+
+
+CollisionType physics(){
     /*gestion de tout ce qui est deplacement dynamique et des colision avec les plateforme
     optionnel gt/n/ration du niveau ici si rapide si devient pllus complexe faire une fonction juste pour cela*/
+    //player 
+    int left = posX;
+    int right = posX + 16;
+    int top = posY;
+    int bottom = posY + 16;
+
+    for (int i = 0; i < platformCount; i++) {
+        if (!platforms[i].active) continue;
+
+        int pLeft = platforms[i].x;
+        int pRight = platforms[i].x + platforms[i].width;
+        int pTop = platforms[i].y;
+        int pBottom = platforms[i].y + 8;  // On suppose une hauteur de plateforme de 8
+
+        // Vérifie la superposition (collision générale)
+        if (right > pLeft && left < pRight && bottom > pTop && top < pBottom) {
+
+            int dxLeft = right - pLeft;
+            int dxRight = pRight - left;
+            int dyTop = bottom - pTop;
+            int dyBottom = pBottom - top;
+
+            // On cherche la plus petite pénétration
+            if (dyTop < dxLeft && dyTop < dxRight && dyTop < dyBottom)
+                return COLLISION_LANDING;
+            else if (dyBottom < dxLeft && dyBottom < dxRight)
+                return COLLISION_BOTTOM;
+            else if (dxLeft < dxRight)
+                return COLLISION_LEFT;
+            else
+                return COLLISION_RIGHT;
+        }
+    }
+
+    return NO_COLLISION;
 }
 void display(){
     /*commande d<affichage sur le PPU c<est la qu<on va utiliser l API*/
@@ -166,17 +216,6 @@ int readJoystickY() {
 
 
 //---------------------------------- Code test a supprimer plus tard -------------------------------------------------------------
-
-//structure de données pour les plateformes
-typedef struct{
-    int x;
-    int y;
-    int width;
-    int active;
-} Platform;
-
-Platform platforms[MAX_PLATFORMS];
-int platformCount = 0; //nombre de plateformes affichees
 
 //s'assurer que les plateformes sont des alignées à des valeurs de tuiles
 int alignToTile(int value) {
@@ -360,7 +399,24 @@ void midair(){
         state = LANDING;
         printf(">> Atterrissage détecté\n");
     }
+    CollisionType colPlateforme = physics();
 
+    if(colPlateforme == COLLISION_LEFT){
+        velX = -velX;
+        printf(">> Rebond gauche\n");
+    }else if(colPlateforme ==COLLISION_RIGHT){
+        velX = -velX;
+        printf(">> Rebond droite\n");
+    }else if(colPlateforme ==COLLISION_BOTTOM){
+        velocityY = -velocityY;
+        printf(">> Rebond haut\n");
+    }else if(colPlateforme ==COLLISION_LANDING){
+        velocityY = 0;
+        velX = 0;  // on arrête aussi horizontalement à l'atterrissage
+        state = LANDING;
+        printf(">> Atterrissage détecté\n");
+    }
+    
     // Affichage
     printf(">> MID-AIR: X=%d | Y=%d | velX=%d | velY=%d\n", posX, posY, velX, velocityY);
     display();
@@ -400,7 +456,9 @@ int main() {
         lastX = platforms[i].x;
         startY = alignToTile(startY - PLATFORM_SPACING_Y);
     }
-    // while(1){
+    // int count = 0;
+    // while(count < 1000){
+    //     count++;
     //     // Petit delay pour ralentir l’exécution juste en test
     //     for (volatile int i = 0; i < 10000000; ++i);
 
