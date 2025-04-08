@@ -183,94 +183,60 @@ int alignToTile(int value) {
     return (value / TILE_SIZE) * TILE_SIZE;
 }
 
-int generatePlatform(int index, int previousY, int previousX){
+int generatePlatform(int index, int y, int previousX){
+    
     platforms[index].width = (rand() % (PLATFORM_MAX_WIDTH - PLATFORM_MIN_WIDTH + 1)) + PLATFORM_MIN_WIDTH;
     int platformWidthinPixels = platforms[index].width * TILE_SIZE;
 
-    int maxX = previousX + 200;
+    int maxX = previousX + 200;    //distances horizontales maximales des plateformes pour que le joeur puisse sauter
     int minX = previousX - 200;
 
-    // bornes arbres
+    //bornes arbres
     if(minX < ARBRE_GAUCHE) minX = ARBRE_GAUCHE;
     if(maxX > ARBRE_DROIT - platformWidthinPixels)
         maxX = ARBRE_DROIT - platformWidthinPixels;
 
-    int rangeX = (maxX - minX) / TILE_SIZE + 1;
-    int offsetPlatformX = (rand() % rangeX) * TILE_SIZE;
-    int newX = minX + offsetPlatformX;
+    int range = (maxX - minX) / TILE_SIZE + 1;
+    //int choice = rand() % range;
+    int offsetPlateform = (rand() % range) * TILE_SIZE;
+    int newX = minX + offsetPlateform;
+    int newY = alignToTile(y);
 
-    // Génération aléatoire Y : entre 10 et 48 pixels au-dessus
-    int minDeltaY = alignToTile(10);
-    int maxDeltaY = alignToTile(48);
-    int steps = (maxDeltaY - minDeltaY) / TILE_SIZE + 1;
-    int deltaY = minDeltaY + (rand() % steps) * TILE_SIZE;
-    int newY = alignToTile(previousY - deltaY);
-
-    if (newY < 0) {
-        return 0; // échec de génération si hors écran
+    if(newY < 0){
+        return 0; //erreur de génération de plateforme
     }
 
     platforms[index].x = newX;
-    platforms[index].y = newY;
+    platforms[index].y=newY;
     platforms[index].active = 1;
+    //générer une position aléatoire pour la plateforme alignée avec les tuiles
 
-    // Debug
     printf(">> Génération de la plateforme %d\n", index);
-    printf(">> Range X : [%d, %d]\n", minX, maxX);
+    printf(">> Range : [%d, %d]\n", minX, maxX);
     printf(">> Position : (%d, %d)\n", platforms[index].x, platforms[index].y);
     printf(">> Largeur : %d\n", platforms[index].width);
     printf(">> Actif : %d\n", platforms[index].active);
-    printf(">> Position précédente : (%d, %d)\n", previousX, previousY);
-
+    printf(">> Position précédente : %d\n", previousX);
     return 1;
 }
 
-
 void initPlatforms(){
-    int startY = posY - TILE_SIZE * 2;
+    int startY = posY - 48;
     int currentX = posX;
-    int currentY = startY;
 
     for(int i = 0; i < MAX_PLATFORMS; i++){
-        if(i % 2 == 0 && i + 1 < MAX_PLATFORMS) {
-            // Génère 2 plateformes à des Y différents pour un effet "fourche"
-            int deltaY1 = alignToTile(16 + rand() % 32); // entre 16 et 48
-            int deltaY2 = alignToTile(48 + rand() % 48); // entre 48 et 96
+        int success = 0;
+        int attemptY = startY;
 
-            int y1 = alignToTile(currentY - deltaY1);
-            int y2 = alignToTile(currentY - deltaY2);
-
-            int success1 = generatePlatform(i, y1, currentX);
-            int success2 = generatePlatform(i + 1, y2, currentX);
-
-            if (!success1 || !success2) {
-                printf(">> ERREUR dans la génération double, on recommence\n");
-                i--; // recommencer cette paire
-                continue;
-            }
-
-            // Pour la suite, on descend un peu mais pas trop
-            currentX = platforms[i + 1].x;
-            currentY = platforms[i + 1].y;
-
-            i++; // on a généré 2 plateformes
-        } else {
-            int success = 0;
-            int attempts = 0;
-
-            while (!success && attempts < 10) {
-                int deltaY = alignToTile(24 + rand() % 48); // entre 24 et 72
-                int newY = alignToTile(currentY - deltaY);
-                success = generatePlatform(i, newY, currentX);
-                attempts++;
-            }
-
-            currentX = platforms[i].x;
-            currentY = platforms[i].y;
+        while (!success && attemptY < posY + 200) {
+            success = generatePlatform(i, attemptY, currentX);
+            attemptY += TILE_SIZE * 3; // on descend un peu si ça échoue
         }
+
+        currentX = platforms[i].x;
+        startY -= PLATFORM_SPACING_Y;
     }
 }
-
 
 void reutilisationPlatforms(){
     for(int i = 0; i < MAX_PLATFORMS; i++){
