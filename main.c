@@ -16,11 +16,11 @@
 #define LANDING 4
 
 //plateformes
-#define MAX_PLATFORMS 7
+#define MAX_PLATFORMS 10
 #define PLATFORM_HEIGHT 2
 #define PLATFORM_MIN_WIDTH 4
 #define PLATFORM_MAX_WIDTH 9
-#define PLATFORM_SPACING_Y 50
+#define PLATFORM_SPACING_Y 48
 
 #define TILE_SIZE 8
 
@@ -122,8 +122,8 @@ int state = IDLE;
 int clk = 1;
 
 // player var 
-int posX = 360;
-int posY = 360;
+int posX = 312;
+int posY = 320;
 
 int acc_X = 0;
 int acc_y = 0; 
@@ -242,9 +242,33 @@ int generatePlatform(int index, int y, int previousX){
     int newY = alignToTile(y);
 
     if(newY < 0){
-        return 0; //erreur de génération de plateforme
+        platforms[index].width = (rand() % (PLATFORM_MAX_WIDTH - PLATFORM_MIN_WIDTH + 1)) + PLATFORM_MIN_WIDTH;
+        platformWidthinPixels = platforms[index].width * TILE_SIZE;
+        int tempX = rand() % (ARBRE_DROIT - platformWidthinPixels - ARBRE_GAUCHE) + ARBRE_GAUCHE;
+        int tempY = rand() % (360 - 0);
+        newX = alignToTile(tempX);
+        newY = alignToTile(tempY);
     }
 
+    for (int i = 0; i < index; i++) {
+        if (!platforms[i].active) continue;
+        int left1 = newX;
+        int right1 = newX + platformWidthinPixels;
+        int top1 = newY;
+        int bottom1 = newY + PLATFORM_HEIGHT * TILE_SIZE;
+    
+        int left2 = platforms[i].x;
+        int right2 = platforms[i].x + platforms[i].width * TILE_SIZE;
+        int top2 = platforms[i].y;
+        int bottom2 = platforms[i].y + PLATFORM_HEIGHT * TILE_SIZE;
+    
+        if (!(right1 <= left2 || left1 >= right2 || bottom1 <= top2 || top1 >= bottom2)) {
+            // chevauchement détecté
+            printf("entered");
+            platforms[index].active = 0;
+            return 0;
+        }
+    }    
     platforms[index].x = newX;
     platforms[index].y=newY;
     platforms[index].active = 1;
